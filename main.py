@@ -1,7 +1,32 @@
+from importlib.util import set_package
 from tkinter import *
 from tkinter import messagebox
 import random
+from tracemalloc import Traceback
+
 import pyperclip
+import json
+
+
+# ---------------------------- SEARCH ------------------------------- #
+
+def search():
+    try:
+        with open("data.json", "r") as data_file:
+            data = json.load(data_file)
+    except:
+        messagebox.showinfo(title="No File", message="File was not found")
+    else:
+        website = entry1.get()
+        if website not in data.keys():
+            messagebox.showinfo(title="Not found", message="Website not found")
+        for key in data.keys():
+            if website.lower() == key.lower():
+                messagebox.showinfo(title=key, message=f"Email: {data[key]['email']}\n"
+    
+                                                       f"Password: {data[key]['password']}")
+    finally:
+            entry1.delete(0, "end")
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def generate_password():
@@ -31,19 +56,29 @@ def add_password():
     website = entry1.get()
     email = entry2.get()
     password = entry3.get()
+    new_data = {
+        website: {
+            "email": email,
+            "password": password
+        }
+    }
     if website == "" or email == "" or password == "":
         messagebox.showerror(title="Oops", message="All fields must be completed.")
     else:
-        is_ok = messagebox.askokcancel(title=website, message=f"These are the details entered:\n"
-                                                      f"Email: {email}\n"
-                                                      f"Password: {password}\n"
-                                                      f"Is this ok to save?")
-        if is_ok:
-            with open("data.txt", "a") as data:
-                data.write(f"{website} | {email} | {password}\n")
-                entry1.delete(0, "end")
-                entry3.delete(0, "end")
+        try:
+            with open("data.json", "r") as saved_data:
+                data = json.load(saved_data)
+        except:
+            with open("data.json", "w") as data_file:
+                json.dump(new_data, data_file, indent=4)
+        else:
+            data.update(new_data)
+            with open("data.json", "w") as saved_data:
+                json.dump(data, saved_data, indent=4)
+        finally:
             messagebox.showinfo(title=website, message=f"Login data for {website} saved")
+            entry1.delete(0, "end")
+            entry3.delete(0, "end")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -57,9 +92,11 @@ canvas.create_image(100, 100, image=logo_img)
 canvas.grid(row=0, column=1)
 label1 = Label(text="Website:")
 label1.grid(row=1, column=0)
-entry1 = Entry(width=35)
-entry1.grid(row=1, column=1, columnspan=2)
+entry1 = Entry(width=18)
+entry1.grid(row=1, column=1)
 entry1.focus()
+button1 = Button(text="Search", width=15, command=search)
+button1.grid(row=1, column=2)
 label2 = Label(text="Email/Username:")
 label2.grid(row=2, column=0)
 entry2 = Entry(width=35)
